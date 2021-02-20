@@ -10,13 +10,21 @@ User.init({
         primaryKey: true,
         autoIncrement: true
     },
-    openId: {
+    userid: {
         type: Sequelize.STRING(64),
         allowNull: false,
         unique: true,
         comment: '用户id'
     },
     createdAt: {
-        
+        type: Sequelize.DATE,
+        defaultValue: Sequelize.NOW,
+        get() {
+            return moment(this.getDataValue('createTime')).format('YYYY-MM-DD');
+        }
     }
 });
+
+module.exports = {
+    User
+}
