@@ -6,11 +6,11 @@ class User extends Model { }
 
 User.init({
     id: {
-        type: Sequelize.INTERGER,
+        type: Sequelize.INTEGER,
         primaryKey: true,
         autoIncrement: true
     },
-    userid: {
+    userId: {
         type: Sequelize.STRING(64),
         allowNull: false,
         unique: true,
@@ -23,6 +23,10 @@ User.init({
             return moment(this.getDataValue('createTime')).format('YYYY-MM-DD');
         }
     }
+}, {
+    sequelize,
+    modelName: 'user',
+    tableName: 'user'
 });
 
 module.exports = {

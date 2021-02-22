@@ -6,13 +6,13 @@ class UserDao {
 
         const hasUser = await User.findOne({
             where: {
-                userid: openid
+                userId: openid
             }
         });
 
         if (!hasUser) {
             const user = new User();
-            user.userid = openid;
+            user.userId = openid;
             user.save();
         }
 
