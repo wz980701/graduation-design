@@ -2,31 +2,29 @@ const moment = require('moment');
 const { sequelize } = require('../../core/db');
 const { Sequelize } = require('sequelize');
 
-const { User } = require('./user');
+const { Community } = require('./community');
 
-const UserInfo = sequelize.define('userInfo', {
+const CommunityAnnounce = sequelize.define('communityAnnounce', {
     id: {
         type: Sequelize.INTEGER,
         primaryKey: true,
         autoIncrement: true
     },
-    uId: {
+    userId: {
         type: Sequelize.STRING(64),
         allowNull: false,
         unique: true,
         comment: '用户id'
     },
-    nickName: {
-        type: Sequelize.STRING(64),
-        comment: '用户名'
+    content: {
+        type: Sequelize.TEXT('medium'),
+        allowNull: false,
+        comment: '公告内容'
     },
-    gender: {
-        type: Sequelize.INTEGER,
-        comment: '性别'
-    },
-    avatarUrl: {
-        type: Sequelize.STRING,
-        comment: '头像路径'
+    atTop: {
+        type: Sequelize.BOOLEAN,
+        defaultValue: false,
+        comment: '是否置顶'
     },
     createTime: {
         type: Sequelize.DATE,
@@ -45,9 +43,10 @@ const UserInfo = sequelize.define('userInfo', {
     freezeTableName: true
 });
 
-User.hasOne(UserInfo);
-UserInfo.belongsTo(User);
+Community.hasMany(CommunityAnnounce);
+CommunityAnnounce.belongsTo(Community);
 
 module.exports = {
-    UserInfo
+    CommunityAnnounce
 }
+

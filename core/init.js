@@ -7,6 +7,7 @@ class InitManager {
         InitManager.initLoadRouters();
         InitManager.loadHttpException();
         InitManager.loadConfig();
+        InitManager.loadUtil();
     }
 
     static initLoadRouters() {
@@ -26,6 +27,12 @@ class InitManager {
         const configPath = path || `${process.cwd()}/config/config.js`;
         const config = require(configPath);
         global.config = config;
+    }
+
+    static loadUtil(path = '') {
+        const utilPath = path || `${process.cwd()}/util/util.js`;
+        const util = require(utilPath);
+        global.util = util;
     }
 
     static loadHttpException() {

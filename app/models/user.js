@@ -1,22 +1,20 @@
 const moment = require('moment');
 const { sequelize } = require('../../core/db');
-const { Sequelize, Model } = require('sequelize');
+const { Sequelize } = require('sequelize');
 
-class User extends Model { }
-
-User.init({
+const User = sequelize.define('user', {
     id: {
         type: Sequelize.INTEGER,
         primaryKey: true,
         autoIncrement: true
     },
-    userId: {
+    uId: {
         type: Sequelize.STRING(64),
         allowNull: false,
         unique: true,
         comment: '用户id'
     },
-    createdAt: {
+    createTime: {
         type: Sequelize.DATE,
         defaultValue: Sequelize.NOW,
         get() {
@@ -24,9 +22,7 @@ User.init({
         }
     }
 }, {
-    sequelize,
-    modelName: 'user',
-    tableName: 'user'
+    freezeTableName: true
 });
 
 module.exports = {

@@ -2,19 +2,24 @@ const moment = require('moment');
 const { sequelize } = require('../../core/db');
 const { Sequelize } = require('sequelize');
 
-const { User } = require('./user');
-
-const UserInfo = sequelize.define('userInfo', {
+const UserCommunity = sequelize.define('userCommunity', {
     id: {
         type: Sequelize.INTEGER,
         primaryKey: true,
         autoIncrement: true
     },
-    uId: {
-        type: Sequelize.STRING(64),
-        allowNull: false,
-        unique: true,
-        comment: '用户id'
+    userId: {
+        type: Sequelize.INTEGER,
+        allowNull: false
+    },
+    communityId: {
+        type: Sequelize.INTEGER,
+        allowNull: false
+    },
+    level: {
+        type: Sequelize.INTEGER,
+        defaultValue: 1,
+        comment: '权限等级'
     },
     nickName: {
         type: Sequelize.STRING(64),
@@ -45,9 +50,6 @@ const UserInfo = sequelize.define('userInfo', {
     freezeTableName: true
 });
 
-User.hasOne(UserInfo);
-UserInfo.belongsTo(User);
-
 module.exports = {
-    UserInfo
+    UserCommunity
 }

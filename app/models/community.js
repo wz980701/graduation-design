@@ -3,30 +3,29 @@ const { sequelize } = require('../../core/db');
 const { Sequelize } = require('sequelize');
 
 const { User } = require('./user');
+const { UserCommunity } = require('./userCommunity');
 
-const UserInfo = sequelize.define('userInfo', {
+const Community = sequelize.define('community', {
     id: {
         type: Sequelize.INTEGER,
         primaryKey: true,
         autoIncrement: true
     },
-    uId: {
+    communityName: {
         type: Sequelize.STRING(64),
-        allowNull: false,
-        unique: true,
-        comment: '用户id'
+        comment: '社团名'
     },
-    nickName: {
-        type: Sequelize.STRING(64),
-        comment: '用户名'
-    },
-    gender: {
-        type: Sequelize.INTEGER,
-        comment: '性别'
+    info: {
+        type: Sequelize.TEXT('medium'),
+        comment: '社团介绍'
     },
     avatarUrl: {
         type: Sequelize.STRING,
-        comment: '头像路径'
+        comment: '社团头像url'
+    },
+    backgroundUrl: {
+        type: Sequelize.STRING,
+        comment: '社团背景图片url'
     },
     createTime: {
         type: Sequelize.DATE,
@@ -38,16 +37,23 @@ const UserInfo = sequelize.define('userInfo', {
     updateTime: {
         type: Sequelize.DATE,
         get() {
-            return moment(this.getDataValue('updateTime')).format('YYYY-MM-DD');
+            return moment(this.getDataValue('createTime')).format('YYYY-MM-DD');
         }
     }
 }, {
     freezeTableName: true
 });
 
-User.hasOne(UserInfo);
-UserInfo.belongsTo(User);
+User.belongsToMany(Community, {
+    through: UserCommunity,
+    foreignKey: 'userId'
+});
+
+Community.belongsToMany(User, {
+    through: UserCommunity,
+    foreignKey: 'communityId'
+});
 
 module.exports = {
-    UserInfo
+    Community
 }
