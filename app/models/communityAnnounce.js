@@ -13,7 +13,6 @@ const CommunityAnnounce = sequelize.define('communityAnnounce', {
     userId: {
         type: Sequelize.STRING(64),
         allowNull: false,
-        unique: true,
         comment: '用户id'
     },
     content: {

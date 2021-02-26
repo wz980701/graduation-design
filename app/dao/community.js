@@ -2,7 +2,7 @@ const { Community } = require('../models/community');
 const { User } = require('../models/user');
 const { UserCommunity } = require('../models/userCommunity');
 const { CommunityAnnounce } = require('../models/communityAnnounce');
-// const { UserInfo } = require('../models/userInfo');
+const { UserInfo } = require('../models/userInfo');
 const { Op } = require('sequelize');
 
 class CommunityDao {
@@ -35,14 +35,30 @@ class CommunityDao {
             attributes: ['id', 'communityName', 'info', 'avatarUrl', 'backgroundUrl'],
             where: {
                 id
-            }
+            },
+            raw: true
+        }) || {};
+
+        const announce = await CommunityAnnounce.findOne({
+            attributes: ['id', 'userId', 'content', 'updateTime', 'createTime'],
+            where: {
+                atTop: true
+            },
+            raw: true
+        }) || {};
+
+        const userInfo = announce && await UserInfo.findOne({
+            attributes: ['nickName', 'gender'],
+            where: {
+                uId: announce.userId
+            },
+            raw: true
         });
 
-        if (!community) throw new global.errs.HttpException('找不到该社团信息');
+        announce.userInfo = userInfo || {};
+        community.announce = announce;
 
-        return {
-            ...community.toJSON()
-        };
+        return community;
     }
     static async getUsers (params) {
         return await this.getUserList(params, {
@@ -80,6 +96,33 @@ class CommunityDao {
         } catch (err) {
             throw new global.errs.HttpException('更新失败');
         }
+    }
+    static async getCurrentUserLevel (params) {
+        const { communityId, userId } = params;
+        const user = await User.findOne({
+            attributes: ['id'],
+            where: { uId: userId },
+            raw: true
+        });
+        return await UserCommunity.findOne({
+            attributes: ['level'],
+            where: {
+                userId: user.id,
+                communityId
+            }
+        }) || {};
+    }
+    static async removeUser (params) {
+        const { userId, communityId } = params;
+        await UserCommunity.destroy({
+            where: {
+                userId,
+                communityId
+            }
+        }).catch((err) => {
+            console.log(err);
+            throw new global.errs.HttpException('删除失败');
+        });
     }
     static async getUserList (params, level) {
         const { communityId, size = 20, page = 0 } = params;

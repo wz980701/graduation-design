@@ -52,4 +52,26 @@ router.post('/getAnnounceList', async (ctx) => { // 获取公告列表
     ctx.body = res.json(data || {}, '获取列表成功');
 });
 
+router.post('/updateAnnounce', async (ctx) => { // 更新公告内容
+    await CommunityAnnounceDao.updateAnnounce(ctx.request.body);
+    ctx.body = res.success('更新成功');
+});
+
+router.get('/deleteAnnounce', async (ctx) => { // 删除公告
+    const { id } = ctx.request.query;
+    await CommunityAnnounceDao.deleteAnnounce(id);
+    ctx.body = res.success('删除成功');
+});
+
+router.get('/getCurrentUserLevel', async (ctx) => { // 获取当前用户等级
+    const data = await CommunityDao.getCurrentUserLevel(ctx.request.query);
+    ctx.body = res.json(data, '获取成功');
+});
+
+router.get('/removeUser', async (ctx) => { // 删除用户
+    await CommunityDao.removeUser(ctx.request.query);
+    ctx.body = res.success('删除成功');
+});
+
 module.exports = router;
+

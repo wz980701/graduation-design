@@ -9,6 +9,7 @@ class CommunityAnnounceDao {
                 updateTime: global.util.getCurrentTimeStamps()
             })
         } catch (err) {
+            console.log(err);
             throw new global.errs.HttpException('创建失败');
         }
     }
@@ -20,18 +21,54 @@ class CommunityAnnounceDao {
                 communityId
             },
             limit: size,
-            offset: page * size
+            offset: page * size,
+            raw: true
         });
-        // rows项需要增加userInfo
+
+        const rows = list.rows;
+        
+        for (let item of rows) {
+            const userInfo = await UserInfo.findOne({
+                attributes: ['nickName', 'gender'],
+                where: {
+                    uId: item.userId
+                },
+                raw: true 
+            });
+            item.userInfo = userInfo;
+        }
+
         return list;
     }
     static async updateAnnounce (params) {
+        const { id, content, atTop } = params;
         try {
-            await CommunityAnnounceDao.update({
-
+            await CommunityAnnounce.update({
+                content,
+                atTop,
+                updateTime: global.util.getCurrentTimeStamps()
+            }, {
+                where: {
+                    id
+                }
             });
         } catch (err) {
+            console.log(err);
             throw new global.errs.HttpException('更新失败');
+        }
+    }
+    static async deleteAnnounce (id) {
+        try {
+            await CommunityAnnounce.destroy({
+                where: {
+                    id
+                }
+            }).then((res) => {
+                console.log(res);
+            })
+        } catch (err) {
+            console.log(err);
+            throw new global.errs.HttpException('删除失败');
         }
     }
 }
