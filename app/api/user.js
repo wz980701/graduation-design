@@ -1,5 +1,8 @@
 const Router = require('koa-router');
 const got = require('got');
+const jwt = require('jsonwebtoken');
+
+const auth = require('../../middlewares/auth');
 
 const { UserDao } = require('../dao/user');
 
@@ -11,11 +14,12 @@ const router = new Router({
 });
 
 const {
-    appId,
-    appSecret
-} = require('../../config/config').wx;
+    wx,
+    security
+} = require('../../config/config');
 
 const getOpenId = async (code) => {
+    const { appId, appSecret } = wx;
     try {
         const result = await got.get(`https://api.weixin.qq.com/sns/jscode2session?appId=${appId}&secret=${appSecret}&js_code=${code}&grant_type=authorization_code`);
         return result.body;
@@ -28,11 +32,14 @@ router.post('/regist', async (ctx) => {
     const { code } = ctx.request.body;
     const data = await getOpenId(code);
     const { openid, session_key } = JSON.parse(data);
-    const user = await UserDao.create({
+    await UserDao.create({
         openid
     });
 
-    ctx.body = res.json({...user, session_key}, '注册成功');
+    const { secret, expiresIn } = security;
+    const token = jwt.sign({ userId: openid }, secret, { expiresIn });
+
+    ctx.body = res.json({token, session_key}, '注册成功');
 });
 
 module.exports = router;

@@ -1,4 +1,5 @@
 const Router = require('koa-router');
+const auth = require('../../middlewares/auth');
 
 const { CommunityDao } = require('../dao/community');
 const { CommunityAnnounceDao } = require('../dao/communityAnnounce');
@@ -63,14 +64,26 @@ router.get('/deleteAnnounce', async (ctx) => { // 删除公告
     ctx.body = res.success('删除成功');
 });
 
-router.get('/getCurrentUserLevel', async (ctx) => { // 获取当前用户等级
-    const data = await CommunityDao.getCurrentUserLevel(ctx.request.query);
+router.get('/getCurrentUserLevel', auth, async (ctx) => { // 获取当前用户等级
+    const { userId } = ctx.state, { communityId } = ctx.request.query;
+    const data = await CommunityDao.getCurrentUserLevel(userId, communityId);
     ctx.body = res.json(data, '获取成功');
 });
 
-router.get('/removeUser', async (ctx) => { // 删除用户
+router.get('/removeUser', async (ctx) => { // 删除用户或者用户退出社团
     await CommunityDao.removeUser(ctx.request.query);
     ctx.body = res.success('删除成功');
+});
+
+router.get('/userCommunityList', async (ctx) => { // 用户获取加入的社团列表
+    const { userId } = ctx.request.query;
+    const data = await CommunityDao.getUserCommunityList(userId);
+    ctx.body = res.json(data, '获取成功');
+});
+
+router.get('/allCommunityList', auth, async (ctx) => { // 获取所有社团列表
+    const data = await CommunityDao.getAllCommunityList();
+    ctx.body = res.json(data, '获取成功');
 });
 
 module.exports = router;

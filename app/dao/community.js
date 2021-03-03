@@ -97,8 +97,7 @@ class CommunityDao {
             throw new global.errs.HttpException('更新失败');
         }
     }
-    static async getCurrentUserLevel (params) {
-        const { communityId, userId } = params;
+    static async getCurrentUserLevel (userId, communityId) {
         const user = await User.findOne({
             attributes: ['id'],
             where: { uId: userId },
@@ -124,6 +123,29 @@ class CommunityDao {
             throw new global.errs.HttpException('删除失败');
         });
     }
+    static async getUserCommunityList(id) {
+        return await User.findAndCountAll({
+            attributes: [],
+            where: {
+                uId: id
+            },
+            include: [
+                {
+                    model: Community,
+                    attributes: ['id', 'communityName', 'avatarUrl'],
+                    through: {
+                        attributes: []
+                    },
+                    required: true
+                }
+            ]
+        });
+    }
+    static async getAllCommunityList() {
+        return await Community.findAndCountAll({
+            attributes: ['id', 'communityName', 'avatarUrl']
+        }) || [];
+    }
     static async getUserList (params, level) {
         const { communityId, size = 20, page = 0 } = params;
         return await UserCommunity.findAndCountAll({
@@ -134,6 +156,26 @@ class CommunityDao {
             },
             limit: size,
             offset: page * size
+        });
+    }
+    static async setAvatarUrl(url, id) {
+        await Community.update({
+            avatarUrl: url,
+            updateTime: global.util.getCurrentTimeStamps()
+        }, {
+            where: {
+                id
+            }
+        });
+    }
+    static async setBackgroundUrl(url, id) {
+        await Community.update({
+            backgroundUrl: url,
+            updateTime: global.util.getCurrentTimeStamps()
+        }, {
+            where: {
+                id
+            }
         });
     }
 }
