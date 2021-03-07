@@ -31,13 +31,14 @@ const Community = sequelize.define('community', {
         type: Sequelize.DATE,
         defaultValue: Sequelize.NOW,
         get() {
-            return moment(this.getDataValue('createTime')).format('YYYY-MM-DD');
+            return moment(this.getDataValue('createTime')).format('YYYY-MM-DD HH:mm:ss');
         }
     },
     updateTime: {
         type: Sequelize.DATE,
+        defaultValue: Sequelize.NOW,
         get() {
-            return moment(this.getDataValue('createTime')).format('YYYY-MM-DD');
+            return moment(this.getDataValue('updateTime')).format('YYYY-MM-DD HH:mm:ss');
         }
     }
 }, {

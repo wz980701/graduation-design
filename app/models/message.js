@@ -2,17 +2,15 @@ const moment = require('moment');
 const { sequelize } = require('../../core/db');
 const { Sequelize } = require('sequelize');
 
-const User = sequelize.define('user', {
+const Message = sequelize.define('message', {
     id: {
         type: Sequelize.INTEGER,
         primaryKey: true,
         autoIncrement: true
     },
-    uId: {
-        type: Sequelize.STRING(64),
-        allowNull: false,
-        unique: true,
-        comment: '用户id'
+    content: {
+        type: Sequelize.TEXT('medium'),
+        comment: '留言内容'
     },
     createTime: {
         type: Sequelize.DATE,
@@ -26,5 +24,5 @@ const User = sequelize.define('user', {
 });
 
 module.exports = {
-    User
+    Message
 }

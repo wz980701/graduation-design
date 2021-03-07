@@ -42,4 +42,9 @@ router.post('/regist', async (ctx) => {
     ctx.body = res.json({token, session_key}, '注册成功');
 });
 
+router.post('/message', async (ctx) => {
+    await UserDao.addMessage(ctx.request.body);
+    ctx.body = res.success('提交留言成功');
+});
+
 module.exports = router;

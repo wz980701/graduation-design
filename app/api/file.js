@@ -26,7 +26,7 @@ const client = new OSS({
     bucket
 });
 
-router.post('/uploadImgs', async (ctx) => {
+router.post('/uploadImgs', async (ctx) => { // 上传图片
     const files = ctx.request.files;
     const { communityId } = ctx.request.body;
     for (let key in files) {
@@ -34,7 +34,7 @@ router.post('/uploadImgs', async (ctx) => {
         const stream = fs.createReadStream(path);
         try {
             const result = await client.putStream(`/community/${communityId}/${file.name}`, stream);
-            await ImageDao.upload(result.url, communityId);
+            await ImageDao.upload(result.url, result.name, communityId);
             fs.unlinkSync(path);
         } catch (err) {
             fs.unlinkSync(path);
@@ -43,6 +43,18 @@ router.post('/uploadImgs', async (ctx) => {
     }
     ctx.body = res.success('上传成功');
 });
+
+router.post('/removeImgs', async (ctx) => { // 删除图片
+    const list = await ImageDao.remove(ctx.request.body);
+    const arr = list.map(item => `/${item}`);
+    arr.length > 0 && await client.deleteMulti(arr);
+    ctx.body = res.success('删除图片成功');
+});
+
+router.get('/getImgs', async (ctx) => { // 获取图片列表
+    const list = await ImageDao.getList(ctx.request.query);
+    ctx.body = res.json(list, '获取图片列表成功');
+});     
 
 router.post('/setAvatarUrl', async (ctx) => {
     const file = ctx.request.files.file, path = file.path;

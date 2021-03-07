@@ -23,6 +23,8 @@ class CommunityDao {
             }
         });
 
+        if (!user) throw new global.errs.NotFound('用户不存在');
+
         const userInfo = await user.getUserInfo({
             attributes: ['nickName', 'gender', 'avatarUrl']
         });
@@ -37,7 +39,9 @@ class CommunityDao {
                 id
             },
             raw: true
-        }) || {};
+        });
+
+        if (!community) return {};
 
         const announce = await CommunityAnnounce.findOne({
             attributes: ['id', 'userId', 'content', 'updateTime', 'createTime'],
@@ -63,19 +67,19 @@ class CommunityDao {
     static async getUsers (params) {
         return await this.getUserList(params, {
             [Op.gte]: 0
-        }) || [];
+        });
     }
     static async getApplyList (params) {
-        return await this.getUserList(params, 0) || [];
+        return await this.getUserList(params, 0);
     }
     static async join (params) {
         const { userId, communityId } = params;
         const user = await User.findOne({
             where: { uId: userId }
         });
-        const community = await Community.findOne({
-            where: { id: communityId }
-        });
+        if (!user) throw new global.errs.NotFound('用户不存在');
+        const community = await Community.findByPk(communityId);
+        if (!community) throw new global.errs.NotFound('社团不存在');
         const userInfo = await user.getUserInfo({
             attributes: ['nickName', 'gender', 'avatarUrl']
         });
@@ -87,15 +91,13 @@ class CommunityDao {
         });
     }
     static async pass (id) {
-        try {
-            await UserCommunity.update({
-                level: 1
-            }, {
-                where: { id }
-            });
-        } catch (err) {
-            throw new global.errs.HttpException('更新失败');
-        }
+        await UserCommunity.update({
+            level: 1
+        }, {
+            where: { id }
+        }).catch(err => {
+            throw new global.errs.HttpException('用户通过失败');
+        });
     }
     static async getCurrentUserLevel (userId, communityId) {
         const user = await User.findOne({
@@ -103,6 +105,7 @@ class CommunityDao {
             where: { uId: userId },
             raw: true
         });
+        if (!user) throw new global.errs.NotFound('用户不存在');
         return await UserCommunity.findOne({
             attributes: ['level'],
             where: {
@@ -118,16 +121,33 @@ class CommunityDao {
                 userId,
                 communityId
             }
-        }).catch((err) => {
-            console.log(err);
-            throw new global.errs.HttpException('删除失败');
+        }).catch(err => {
+            throw new global.errs.HttpException('删除用户失败');
         });
     }
-    static async getUserCommunityList(id) {
-        return await User.findAndCountAll({
+    static async search(params) {
+        const { text, size = 10, page = 1 } = params;
+        const list = await Community.findAndCountAll({
+            attributes: ['id', 'communityName', 'avatarUrl'],
+            where: {
+                [Op.like]: `%${text}$`
+            },
+            limit: size,
+            offset: (page - 1) * size
+        });
+        if (!list) return {};
+        return {
+            data: list.rows,
+            count: list.count,
+            totalPage: Math.ceil(list.count / size)
+        }
+    }
+    static async getUserCommunityList(params) {
+        const { userId, size = 10, page = 1 } = params;
+        const list = await User.findAndCountAll({
             attributes: [],
             where: {
-                uId: id
+                uId: userId
             },
             include: [
                 {
@@ -138,25 +158,48 @@ class CommunityDao {
                     },
                     required: true
                 }
-            ]
+            ],
+            limit: size,
+            offset: (page - 1) * size
         });
+        if (!list) return {};
+        return {
+            data: list.rows[0].communities,
+            count: list.count,
+            totalPage: Math.ceil(list.count / size)
+        }
     }
-    static async getAllCommunityList() {
-        return await Community.findAndCountAll({
-            attributes: ['id', 'communityName', 'avatarUrl']
-        }) || [];
+    static async getAllCommunityList(params) {
+        const { size = 10, page = 1 } = params;
+        const list = await Community.findAndCountAll({
+            attributes: ['id', 'communityName', 'avatarUrl'],
+            limit: size,
+            offset: (page - 1) * size
+        });
+        if (!list) return {}
+        return {
+            data: list.rows,
+            count: list.count,
+            totalPage: Math.ceil(list.count / size)
+        }
     }
     static async getUserList (params, level) {
-        const { communityId, size = 20, page = 0 } = params;
-        return await UserCommunity.findAndCountAll({
+        const { communityId, size = 10, page = 1 } = params;
+        const list = await UserCommunity.findAndCountAll({
             attributes: ['userId', 'level', 'nickName', 'gender', 'avatarUrl'],
             where: {
                 communityId,
                 level
             },
             limit: size,
-            offset: page * size
+            offset: (page - 1) * size
         });
+        if (!list) return {};
+        return {
+            data: list.rows,
+            count: list.count,
+            totalPage: Math.ceil(list.count / size)
+        }
     }
     static async setAvatarUrl(url, id) {
         await Community.update({
@@ -166,6 +209,8 @@ class CommunityDao {
             where: {
                 id
             }
+        }).catch(err => {
+            throw new global.errs.HttpException('设置头像失败');
         });
     }
     static async setBackgroundUrl(url, id) {
@@ -176,6 +221,8 @@ class CommunityDao {
             where: {
                 id
             }
+        }).catch(err => {
+            throw new global.errs.HttpException('设置背景头像失败');
         });
     }
 }

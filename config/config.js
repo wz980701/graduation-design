@@ -18,8 +18,8 @@ module.exports = {
     },
     oss: {
         region: 'oss-cn-beijing',
-        accessKeyId: 'LTAI4GAVcqY9UY1kRQaUv9C3',
-        accessKeySecret: 'UXofMWK1LkUwt0QqqXqAaNYxk1hNi8',
+        accessKeyId: 'LTAI4GJUG9Kc9inNwxvJthW2',
+        accessKeySecret: '8K8cj8Idjp1cro1UNmvMCmqG4uyzG9',
         bucket: 'graduation-jeremy'
     }
 }

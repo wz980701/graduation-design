@@ -1,4 +1,5 @@
 const { User } = require('../models/user');
+const { Message } = require('../models/message');
 
 class UserDao {
     static async create(params) {
@@ -19,6 +20,12 @@ class UserDao {
         return {
             userId: openid
         }
+    }
+    static async addMessage(params) {
+        const { content } = params;
+        await Message.create({ content }).catch(err => {
+            throw new global.errs.HttpException('创建留言失败');
+        });
     }
 }
 

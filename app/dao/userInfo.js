@@ -19,7 +19,7 @@ class UserInfoDao {
             }
         });
 
-        if (!user) throw new global.errs.HttpException('用户不存在');
+        if (!user) throw new global.errs.NotFound('用户不存在');
 
         const userInfoIns = await UserInfo.create({...userInfo, uId: userId})
 
@@ -40,8 +40,7 @@ class UserInfoDao {
                 uId: userId
             }
         }).catch((err) => {
-            console.log(err);
-            throw new global.errs.HttpException('找不到该用户信息');
+            throw new global.errs.HttpException('更新用户信息失败');
         });
     }
 }

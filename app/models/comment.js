@@ -2,17 +2,19 @@ const moment = require('moment');
 const { sequelize } = require('../../core/db');
 const { Sequelize } = require('sequelize');
 
-const User = sequelize.define('user', {
+const Comment = sequelize.define('comment', {
     id: {
         type: Sequelize.INTEGER,
         primaryKey: true,
         autoIncrement: true
     },
-    uId: {
-        type: Sequelize.STRING(64),
-        allowNull: false,
-        unique: true,
-        comment: '用户id'
+    content: {
+        type: Sequelize.TEXT('medium'),
+        allowNull: false
+    },
+    userId: {
+        type: Sequelize.STRING,
+        allowNull: false
     },
     createTime: {
         type: Sequelize.DATE,
@@ -20,11 +22,18 @@ const User = sequelize.define('user', {
         get() {
             return moment(this.getDataValue('createTime')).format('YYYY-MM-DD HH:mm:ss');
         }
+    },
+    updateTime: {
+        type: Sequelize.DATE,
+        defaultValue: Sequelize.NOW,
+        get() {
+            return moment(this.getDataValue('updateTime')).format('YYYY-MM-DD HH:mm:ss');
+        }
     }
 }, {
-    freezeTableName: true
+        freezeTableName: true
 });
 
 module.exports = {
-    User
+    Comment
 }

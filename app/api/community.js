@@ -76,13 +76,17 @@ router.get('/removeUser', async (ctx) => { // 删除用户或者用户退出社�
 });
 
 router.get('/userCommunityList', async (ctx) => { // 用户获取加入的社团列表
-    const { userId } = ctx.request.query;
-    const data = await CommunityDao.getUserCommunityList(userId);
+    const data = await CommunityDao.getUserCommunityList(ctx.request.query);
     ctx.body = res.json(data, '获取成功');
 });
 
 router.get('/allCommunityList', auth, async (ctx) => { // 获取所有社团列表
     const data = await CommunityDao.getAllCommunityList();
+    ctx.body = res.json(data, '获取成功');
+});
+
+router.post('/search', async (ctx) => { // 搜索社团
+    const data = await CommunityDao.search(ctx.request.body);
     ctx.body = res.json(data, '获取成功');
 });
 

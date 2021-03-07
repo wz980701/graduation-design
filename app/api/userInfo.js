@@ -13,14 +13,14 @@ router.post('/create', async (ctx) => {
     const resq = ctx.request.body;
     const userInfo = await UserInfoDao.create(resq);
 
-    ctx.body = res.json(userInfo, '创建成功');
+    ctx.body = res.json(userInfo, '创建用户信息成功');
 });
 
 router.post('/update', async (ctx) => {
     const resq = ctx.request.body;
     await UserInfoDao.update(resq);
     
-    ctx.body = res.success('更新成功');
+    ctx.body = res.success('更新用户信息成功');
 });
 
 module.exports = router;

@@ -14,11 +14,15 @@ const Image = sequelize.define('image', {
         type: Sequelize.STRING,
         comment: '图片路径'
     },
+    name: {
+        type: Sequelize.STRING,
+        comment: '图片名字'
+    },
     createTime: {
         type: Sequelize.DATE,
         defaultValue: Sequelize.NOW,
         get() {
-            return moment(this.getDataValue('createTime')).format('YYYY-MM-DD');
+            return moment(this.getDataValue('createTime')).format('YYYY-MM-DD HH:mm:ss');
         }
     }
 }, {

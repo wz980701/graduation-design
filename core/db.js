@@ -20,8 +20,19 @@ const sequelize = new Sequelize(dbName, user, password, {
         createdAt: 'created_at',
         updatedAt: 'updated_at',
         deletedAt: 'deleted_at',
-        underscored: true
-    }
+        underscored: true,
+        scopes: {
+            iv: {
+                attributes: {
+                    exclude: ['updated_at', 'deleted_at', 'created_at']
+                }
+            }
+        }
+    },
+    dialectOptions: {
+        dateStrings: true,
+        typeCast: true
+    },
 });
 
 sequelize.sync({ force: false });

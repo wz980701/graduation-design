@@ -2,28 +2,33 @@ const moment = require('moment');
 const { sequelize } = require('../../core/db');
 const { Sequelize } = require('sequelize');
 
-const { Community } = require('./community');
+const { Like } = require('./like');
+const { Comment } = require('./comment');
 
-const CommunityAnnounce = sequelize.define('communityAnnounce', {
+const Dynamic = sequelize.define('dynamic', {
     id: {
         type: Sequelize.INTEGER,
         primaryKey: true,
         autoIncrement: true
     },
-    userId: {
-        type: Sequelize.STRING(64),
-        allowNull: false,
-        comment: '用户id'
-    },
     content: {
         type: Sequelize.TEXT('medium'),
         allowNull: false,
-        comment: '公告内容'
+        comment: '动态内容'
     },
-    atTop: {
+    img: {
+        type: Sequelize.STRING,
+        comment: '图片'
+    },
+    userId: {
+        type: Sequelize.STRING
+    },
+    communityId: {
+        type: Sequelize.INTEGER
+    },
+    isCommunity: {
         type: Sequelize.BOOLEAN,
-        defaultValue: false,
-        comment: '是否置顶'
+        defaultValue: false
     },
     createTime: {
         type: Sequelize.DATE,
@@ -43,10 +48,12 @@ const CommunityAnnounce = sequelize.define('communityAnnounce', {
     freezeTableName: true
 });
 
-Community.hasMany(CommunityAnnounce);
-CommunityAnnounce.belongsTo(Community);
+Dynamic.hasMany(Like);
+Dynamic.hasMany(Comment);
+
+Like.belongsTo(Dynamic);
+Comment.belongsTo(Dynamic);
 
 module.exports = {
-    CommunityAnnounce
+    Dynamic
 }
-
