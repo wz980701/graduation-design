@@ -26,7 +26,7 @@ const client = new OSS({
     bucket
 });
 
-router.post('/uploadImgs', async (ctx) => { // 上传图片
+router.post('/uploadImgs', async (ctx) => { // 上传图片 已测试
     const files = ctx.request.files;
     const { communityId } = ctx.request.body;
     for (let key in files) {
@@ -41,22 +41,22 @@ router.post('/uploadImgs', async (ctx) => { // 上传图片
             throw new global.errs.HttpException('上传失败');
         }
     }
-    ctx.body = res.success('上传成功');
+    ctx.body = res.success('上传图片成功');
 });
 
-router.post('/removeImgs', async (ctx) => { // 删除图片
+router.post('/removeImgs', async (ctx) => { // 删除图片 已测试
     const list = await ImageDao.remove(ctx.request.body);
     const arr = list.map(item => `/${item}`);
     arr.length > 0 && await client.deleteMulti(arr);
     ctx.body = res.success('删除图片成功');
 });
 
-router.get('/getImgs', async (ctx) => { // 获取图片列表
+router.get('/getImgs', async (ctx) => { // 获取图片列表 已测试
     const list = await ImageDao.getList(ctx.request.query);
     ctx.body = res.json(list, '获取图片列表成功');
 });     
 
-router.post('/setAvatarUrl', async (ctx) => {
+router.post('/setAvatarUrl', async (ctx) => { // 设置头像 已测试
     const file = ctx.request.files.file, path = file.path;
     const { communityId } = ctx.request.body;
     const stream = fs.createReadStream(path);
@@ -68,10 +68,10 @@ router.post('/setAvatarUrl', async (ctx) => {
         fs.unlinkSync(path);
         throw new global.errs.HttpException('上传失败');
     }
-    ctx.body = res.success('上传成功');
+    ctx.body = res.success('上传头像成功');
 });
 
-router.post('/setBackgroundUrl', async (ctx) => {
+router.post('/setBackgroundUrl', async (ctx) => { // 设置背景图片 已测试
     const file = ctx.request.files.file, path = file.path;
     const { communityId } = ctx.request.body;
     const stream = fs.createReadStream(path);
@@ -83,7 +83,7 @@ router.post('/setBackgroundUrl', async (ctx) => {
         fs.unlinkSync(path);
         throw new global.errs.HttpException('上传失败');
     }
-    ctx.body = res.success('上传成功');
+    ctx.body = res.success('上传背景图片成功');
 });
 
 module.exports = router;

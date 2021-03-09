@@ -7,7 +7,7 @@ const { Op } = require('sequelize');
 
 class CommunityDao {
     static async create (params) {
-        const { userId, communityInfo } = params;
+        const { userId, ...communityInfo } = params;
 
         const { communityName } = communityInfo;
 
@@ -32,7 +32,30 @@ class CommunityDao {
         const community = await Community.create({...communityInfo});
         await community.addUsers(user, { through: { level: 100, ...userInfo.toJSON() }});
     }
-    static async get (id) {
+    static async update(params) {
+        const { id, ...remain } = params;
+        const hasCommunity = await Community.findOne({
+            where: {
+                communityName: remain.communityName,
+                id: {
+                    [Op.ne]: id
+                }
+            }
+        });
+        if (hasCommunity) throw new global.errs.Existing('该社团已存在,社团名不可重复');
+        await Community.update({
+            ...remain,
+            updateTime: global.util.getCurrentTimeStamps()
+        }, {
+            where: {
+                id
+            }
+        }).catch(err => {
+            console.log(err);
+            throw new global.errs.HttpException('社保信息更新失败');
+        });
+    }
+    static async getInfo (id) {
         const community = await Community.findOne({
             attributes: ['id', 'communityName', 'info', 'avatarUrl', 'backgroundUrl'],
             where: {
@@ -43,24 +66,26 @@ class CommunityDao {
 
         if (!community) return {};
 
-        const announce = await CommunityAnnounce.findOne({
+        const announce = await CommunityAnnounce.findAll({
             attributes: ['id', 'userId', 'content', 'updateTime', 'createTime'],
-            where: {
-                atTop: true
-            },
-            raw: true
-        }) || {};
-
-        const userInfo = announce && await UserInfo.findOne({
-            attributes: ['nickName', 'gender'],
-            where: {
-                uId: announce.userId
-            },
+            where: { communityId: id },
+            order: [
+                ['update_time', 'DESC']
+            ],
             raw: true
         });
 
-        announce.userInfo = userInfo || {};
-        community.announce = announce;
+        if (announce.length > 0) {
+            announce[0].userInfo = await UserInfo.findOne({
+                attributes: ['nickName', 'gender'],
+                where: {
+                    uId: announce[0].userId
+                },
+                raw: true
+            }) || {};
+        }
+
+        community.announce = announce[0] || {};
 
         return community;
     }
@@ -92,7 +117,8 @@ class CommunityDao {
     }
     static async pass (id) {
         await UserCommunity.update({
-            level: 1
+            level: 1,
+            updateTime: global.util.getCurrentTimeStamps()
         }, {
             where: { id }
         }).catch(err => {
@@ -130,8 +156,13 @@ class CommunityDao {
         const list = await Community.findAndCountAll({
             attributes: ['id', 'communityName', 'avatarUrl'],
             where: {
-                [Op.like]: `%${text}$`
+                communityName: {
+                    [Op.like]: `%${text}%`
+                }
             },
+            order: [
+                ['update_time', 'DESC']
+            ],
             limit: size,
             offset: (page - 1) * size
         });
@@ -156,7 +187,10 @@ class CommunityDao {
                     through: {
                         attributes: []
                     },
-                    required: true
+                    required: true,
+                    order: [
+                        ['update_time', 'DESC']
+                    ]
                 }
             ],
             limit: size,
@@ -173,12 +207,49 @@ class CommunityDao {
         const { size = 10, page = 1 } = params;
         const list = await Community.findAndCountAll({
             attributes: ['id', 'communityName', 'avatarUrl'],
+            order: [
+                ['update_time', 'DESC']
+            ],
             limit: size,
             offset: (page - 1) * size
         });
         if (!list) return {}
         return {
             data: list.rows,
+            count: list.count,
+            totalPage: Math.ceil(list.count / size)
+        }
+    }
+    static async getSelectCommunityList(params) {
+        const { userId, level, size = 10, page = 1 } = params;
+        const user = await User.findOne({
+            where: { uId: userId }
+        });
+        if (!user) throw new global.errs.NotFound('用户不存在');
+        const list = await UserCommunity.findAndCountAll({
+            attributes: ['communityId'],
+            where: {
+                userId: user.id,
+                level
+            },
+            order: [
+                ['update_time', 'DESC']
+            ],
+            limit: size,
+            offset: (page - 1) * size
+        });
+        if (!list) return {};
+        const data = [];
+        for (let item of list.rows) {
+            const communityInfo = await Community.findOne({
+                attributes: ['id', 'avatarUrl', 'communityName'],
+                where: { id: item.communityId },
+                raw: true
+            });
+            data.push(communityInfo)
+        }
+        return {
+            data,
             count: list.count,
             totalPage: Math.ceil(list.count / size)
         }
@@ -191,10 +262,12 @@ class CommunityDao {
                 communityId,
                 level
             },
+            order: [
+                ['update_time', 'DESC']
+            ],
             limit: size,
             offset: (page - 1) * size
         });
-        if (!list) return {};
         return {
             data: list.rows,
             count: list.count,

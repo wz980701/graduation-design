@@ -1,14 +1,23 @@
 const { CommunityAnnounce } = require('../models/communityAnnounce');
+const { Community } = require('../models/community');
 const { UserInfo } = require('../models/userInfo');
 
 class CommunityAnnounceDao {
-    static async addAnnounce (params) {
-        await CommunityAnnounce.create({
-            ...params,
+    static async addAnnounce(params) {
+        const { communityId, ...remain } = params;
+        const community = await Community.findOne({
+            where: {
+                id: communityId
+            } 
+        });
+        if (!community) throw new global.errs.NotFound('未找到该社团');
+        const announce = await CommunityAnnounce.create({
+            ...remain,
             updateTime: global.util.getCurrentTimeStamps()
         }).catch(err => {
             throw new global.errs.HttpException('创建公告失败');
         });
+        community.setCommunityAnnounces(announce);
     }
     static async getAnnounceList (params) {
         const { communityId, size = 10, page = 1 } = params;
@@ -17,6 +26,9 @@ class CommunityAnnounceDao {
             where: {
                 communityId
             },
+            order: [
+                ['update_time', 'DESC']
+            ],
             limit: size,
             offset: (page - 1) * size,
             raw: true
@@ -44,10 +56,9 @@ class CommunityAnnounceDao {
         }
     }
     static async updateAnnounce (params) {
-        const { id, content, atTop } = params;
+        const { id, content } = params;
         await CommunityAnnounce.update({
             content,
-            atTop,
             updateTime: global.util.getCurrentTimeStamps()
         }, {
             where: {

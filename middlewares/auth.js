@@ -12,13 +12,15 @@ module.exports = async (ctx, next) => {
             if (/^Bearer$/i.test(scheme)) {
                 try {
                     const res = jwt.verify(token, secret);
-                    ctx.state.userId = res.openid;
-                    await next();
+                    ctx.state.userId = res.userId;
                 } catch (err) {
                     throw new global.errs.AuthFailed('token验证失败');
                 }
+                await next();
             }
         }
+    } else {
+        throw new global.errs.AuthFailed('需要携带token值');
     }
 }
 

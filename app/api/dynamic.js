@@ -26,43 +26,43 @@ const client = new OSS({
     bucket
 });
 
-router.post('/userRelease', async (ctx) => { // 用户发布动态
+router.post('/userRelease', auth, async (ctx) => { // 用户发布动态 已测试
     const result = await releaseFunc(ctx);
-    await DynamicDao.release({ ...ctx.request.body, img: result.url});
-    ctx.body = res.success('发布成功');
+    await DynamicDao.release({ ...ctx.request.body, img: result.url, userId: ctx.state.userId});
+    ctx.body = res.success('发布动态成功');
 });
 
-router.post('/communityRelease', async (ctx) => { // 社团发布动态
+router.post('/communityRelease', auth, async (ctx) => { // 社团发布动态 已测试
     const result = await releaseFunc(ctx);
-    await DynamicDao.release({ ...ctx.request.body, img: result.url, isCommunity: true });
-    ctx.body = res.success('发布成功');
+    await DynamicDao.release({ ...ctx.request.body, img: result.url, isCommunity: true, userId: ctx.state.userId });
+    ctx.body = res.success('发布动态成功');
 });
 
-router.post('/edit', async (ctx) => { // 编辑动态
+router.post('/edit', async (ctx) => { // 编辑动态 已测试
     const result = await releaseFunc(ctx);
     await DynamicDao.edit({ ...ctx.request.body, img: result.url });
     ctx.body = res.success('编辑动态成功');
 });
 
-router.get('/delete', async (ctx) => { // 删除动态
+router.get('/delete', async (ctx) => { // 删除动态 已测试
     const { dynamicId } = ctx.request.query;
     await DynamicDao.remove(dynamicId);
     ctx.body = res.success('删除动态成功');
-})
+});
 
-router.get('/detail', async (ctx) => { // 获取动态详情
-    const { id } = ctx.request.query;
-    const data = await DynamicDao.getDetail(id);
+router.get('/detail', async (ctx) => { // 获取动态详情 已测试
+    const { dynamicId } = ctx.request.query;
+    const data = await DynamicDao.getDetail(dynamicId);
     ctx.body = res.json(data, '获取详情成功');
 });
 
-router.post('/like', async (ctx) => { // 点赞动态
-    await DynamicDao.like(ctx.request.body);
-    ctx.body = res.success('点赞成功');
+router.get('/like', auth, async (ctx) => { // 点赞动态 已测试
+    const msg = await DynamicDao.like({...ctx.request.query,userId: ctx.state.userId});
+    ctx.body = res.success(msg);
 });
 
-router.post('/addComment', async (ctx) => { // 添加评论
-    await DynamicDao.addComment(ctx.request.body);
+router.post('/addComment', auth, async (ctx) => { // 添加评论
+    await DynamicDao.addComment({...ctx.request.body, userId: ctx.state.userId});
     ctx.body = res.success('评论成功');
 });
 
@@ -77,14 +77,19 @@ router.get('/removeComment', async (ctx) => { // 删除评论
     ctx.body = res.success('删除评论成功');
 });
 
-router.get('/userList', async (ctx) => { // 获取用户动态列表
-    const data = await DynamicDao.getUserList(ctx.request.query);
-    ctx.body = res.json(data, '获取列表成功');
+router.get('/userList', auth, async (ctx) => { // 获取用户动态列表 已测试
+    const data = await DynamicDao.getUserList({...ctx.request.query, userId: ctx.state.userId});
+    ctx.body = res.json(data, '获取动态列表成功');
 });
 
-router.get('/communityList', async (ctx) => { // 获取社团动态列表
-    const data = await DynamicDao.getCommunityList();
-    ctx.body = res.json(data, '获取列表成功');
+router.get('/ownerList', auth, async (ctx) => { // 获取用户自身动态列表 已测试
+    const data = await DynamicDao.getOwnerList({ ...ctx.request.query, userId: ctx.state.userId });
+    ctx.body = res.json(data, '获取动态列表成功');
+});
+
+router.get('/communityList', auth, async (ctx) => { // 获取社团动态列表 已测试
+    const data = await DynamicDao.getCommunityList({...ctx.request.query, userId: ctx.state.userId});
+    ctx.body = res.json(data, '获取动态列表成功');
 });
 
 const releaseFunc = async (ctx) => {

@@ -1,6 +1,5 @@
 const Koa = require('koa');
 const InitManager = require('./core/init');
-// const parser = require('koa-bodyparser');
 const koaBody = require('koa-body');
 const cors = require('koa2-cors');
 const path = require('path');

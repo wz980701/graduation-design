@@ -1,10 +1,21 @@
 const { Dynamic } = require('../models/dynamic');
 const { UserInfo } = require('../models/userInfo');
+const { User } = require('../models/user');
+const { community, Community } = require('../models/community');
 const { Like } = require('../models/like');
 const { Comment } = require('../models/comment');
 
 class DynamicDao {
     static async release(params) {
+        const { userId, communityId } = params;
+        const user = await User.findOne({
+            where: { uId: userId }
+        });
+        if (!user) throw new global.errs.NotFound('未找到该用户');
+        if (communityId) {
+            const community = await Community.findByPk(communityId);
+            if (!community) throw new global.errs.NotFound('未找到该社团');
+        }
         await Dynamic.create({ ...params }).catch(err => {
             throw new global.errs.HttpException('创建动态失败');
         });
@@ -30,9 +41,7 @@ class DynamicDao {
         });
     }
     static async getDetail(id) {
-        const data = await Dynamic.findByPk(id, {
-            attributes: ['id', 'content', 'img']
-        }).catch(err => {
+        const data = await Dynamic.scope('iv').findByPk(id).catch(err => {
             throw new global.errs.NotFound('没有找到相关动态');
         });
         return data;
@@ -43,12 +52,19 @@ class DynamicDao {
             isCommunity: false
         }, size, page, userId);
     }
+    static async getOwnerList(params) {
+        const { size = 10, page = 1, userId } = params;
+        return await this.getDynamicList({
+            isCommunity: false,
+            userId
+        }, size, page, userId);
+    }
     static async getCommunityList(params) {
-        const { communityId } = params;
+        const { size = 10, page = 1, communityId, userId } = params;
         return await this.getDynamicList({
             isCommunity: true,
             communityId
-        });
+        }, size, page, userId);
     }
     static async remove(id) {
         await Dynamic.destroy({
@@ -67,13 +83,17 @@ class DynamicDao {
         });
         if (hasUserLike) {
             hasUserLike.like = !hasUserLike.like;
+            hasUserLike.updateTime = global.util.getCurrentTimeStamps();
             hasUserLike.save();
+            return hasUserLike.like ? '点赞成功' : '取消点赞成功';
         } else {
             await Like.create({
                 like: true,
                 dynamicId,
                 userId
-            }).catch(err => {
+            }).then(res => {
+                return '点赞成功';
+            }).catch (err => {
                 throw new global.errs.HttpException('删除动态失败');
             });
         }
@@ -141,7 +161,7 @@ class DynamicDao {
                 limit: size,
                 offset: (page - 1) * size,
                 order: [
-                    ['create_time', 'DESC']
+                    ['update_time', 'DESC']
                 ],
                 raw: true
             });

@@ -7,20 +7,12 @@ class HttpException extends Error {
     }
 }
 
-class ParameterException extends HttpException {
-    constructor(msg) {
-        super();
-        this.code = 400;
-        this.msg = msg || '参数错误';
-    }
-}
-
 class AuthFailed extends HttpException {
     constructor(msg) {
         super();
         this.code = 401;
         this.msg = msg || '授权失败';
-        this.errorCode = 10004;
+        this.errorCode = 10001;
     }
 }
 
@@ -29,7 +21,7 @@ class NotFound extends HttpException {
         super();
         this.code = 404;
         this.msg = msg || '404找不到';
-        this.errorCode = 10005;
+        this.errorCode = 10002;
     }
 }
 
@@ -38,12 +30,12 @@ class Forbidden extends HttpException {
         super();
         this.code = 403;
         this.msg = msg || '禁止访问';
-        this.errorCode = 10006;
+        this.errorCode = 10003;
     }
 }
 
 class Existing extends HttpException {
-    constructor(msg, errorCode) {
+    constructor(msg) {
         super();
         this.code = 412;
         this.msg = msg || '已存在';
@@ -53,7 +45,6 @@ class Existing extends HttpException {
 
 module.exports = {
     HttpException,
-    ParameterException,
     AuthFailed,
     NotFound,
     Forbidden,

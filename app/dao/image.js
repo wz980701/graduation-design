@@ -34,6 +34,9 @@ class ImageDao {
             where: {
                 communityId
             },
+            order: [
+                ['create_time', 'DESC']
+            ],
             limit: size,
             offset: (page - 1) * size
         });
