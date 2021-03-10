@@ -1,9 +1,10 @@
 const { Dynamic } = require('../models/dynamic');
 const { UserInfo } = require('../models/userInfo');
 const { User } = require('../models/user');
-const { community, Community } = require('../models/community');
+const { Community } = require('../models/community');
 const { Like } = require('../models/like');
 const { Comment } = require('../models/comment');
+const { CommunityDao } = require('./community');
 
 class DynamicDao {
     static async release(params) {
@@ -15,30 +16,38 @@ class DynamicDao {
         if (communityId) {
             const community = await Community.findByPk(communityId);
             if (!community) throw new global.errs.NotFound('未找到该社团');
+            const { level } = await CommunityDao.getCurrentUserLevel(userId, communityId);
+            if (level < 10) throw new global.errs.Forbidden('权限不足');
         }
         await Dynamic.create({ ...params }).catch(err => {
             throw new global.errs.HttpException('创建动态失败');
         });
     }
     static async edit(params) {
-        const { dynamicId, ...remain } = params;
-        await Dynamic.update({
-            ...remain,
-            updateTime: global.util.getCurrentTimeStamps()
-        }, {
-            where: {
-                id: dynamicId
-            }
-        }).catch(err => {
-            throw new global.errs.HttpException('编辑动态失败');
-        });
+        const { dynamicId, userId, ...remain } = params;
+        const dynamic = await Dynamic.findByPk(dynamicId);
+        if (!dynamic) throw new global.errs.NotFound('未找到该动态');
+        if (dynamic.isCommunity) {
+            const { level } = await CommunityDao.getCurrentUserLevel(userId, dynamic.communityId);
+            if (level < 10) throw new global.errs.Forbidden('权限不足');
+        } else if (!dynamic.isCommunity && dynamic.userId !== userId) {
+            throw new global.errs.Forbidden('没有权限编辑该动态');
+        }
+        dynamic.content = remain.content;
+        dynamic.img = remain.img;
+        dynamic.updateTime = global.util.getCurrentTimeStamps();
+        dynamic.save();
     }
-    static async remove(id) {
-        await Dynamic.destroy({
-            where: { id }
-        }).catch(err => {
-            throw new global.errs.HttpException('删除动态失败');
-        });
+    static async remove(id, userId) {
+        const dynamic = await Dynamic.findByPk(id);
+        if (!dynamic) throw new global.errs.NotFound('未找到该动态');
+        if (dynamic.isCommunity) {
+            const { level } = await CommunityDao.getCurrentUserLevel(userId, dynamic.communityId);
+            if (level < 10) throw new global.errs.Forbidden('权限不足');
+        } else if (!dynamic.isCommunity && dynamic.userId !== userId) {
+            throw new global.errs.Forbidden('没有权限编辑该动态');
+        }
+        dynamic.destroy();
     }
     static async getDetail(id) {
         const data = await Dynamic.scope('iv').findByPk(id).catch(err => {
@@ -108,26 +117,19 @@ class DynamicDao {
         dynamic.addComments(newComment);
     }
     static async editComment(params) {
-        const { id, ...comment } = params;
-        await Comment.update({
-            ...comment,
-            updateTime: global.util.getCurrentTimeStamps()
-        }, {
-            where: {
-                id
-            }
-        }).catch(err => {
-            throw new global.errs.HttpException('编辑评论失败');
-        });
+        const { id, userId, content } = params;
+        const comment = await Comment.findByPk(id);
+        if (!comment) throw new global.errs.NotFound('未找到该评论');
+        if (comment.userId !== userId) throw new global.errs.Forbidden('没有权限编辑该动态');
+        comment.content = content;
+        comment.updateTime = global.util.getCurrentTimeStamps();
+        comment.save();
     }
-    static async removeComment(id) {
-        await Comment.destroy({
-            where: {
-                id
-            }
-        }).catch(err => {
-            throw new global.errs.HttpException('删除评论失败');
-        });
+    static async removeComment(id, userId) {
+        const comment = await Comment.findByPk(id);
+        if (!comment) throw new global.errs.NotFound('未找到该评论');
+        if (comment.userId !== userId) throw new global.errs.Forbidden('没有权限编辑该动态');
+        comment.destroy();
     }
     static async getUserInfo(userId) {
         const data = await UserInfo.findOne({

@@ -28,7 +28,7 @@ const getOpenId = async (code) => {
     }
 }
 
-router.post('/regist', async (ctx) => {
+router.post('/regist', async (ctx) => { // 注册
     const { code } = ctx.request.body;
     const data = await getOpenId(code);
     const { openid, session_key } = JSON.parse(data);
@@ -42,7 +42,7 @@ router.post('/regist', async (ctx) => {
     ctx.body = res.json({token, session_key}, '注册成功');
 });
 
-router.post('/message', async (ctx) => {
+router.post('/message', async (ctx) => { // 留言 已测试
     await UserDao.addMessage(ctx.request.body);
     ctx.body = res.success('提交留言成功');
 });

@@ -33,7 +33,9 @@ class CommunityDao {
         await community.addUsers(user, { through: { level: 100, ...userInfo.toJSON() }});
     }
     static async update(params) {
-        const { id, ...remain } = params;
+        const { id, userId, ...remain } = params;
+        const { level } = await this.getCurrentUserLevel(userId, id);
+        if (level < 10) throw new global.errs.Forbidden('权限不足');
         const hasCommunity = await Community.findOne({
             where: {
                 communityName: remain.communityName,
@@ -91,7 +93,7 @@ class CommunityDao {
     }
     static async getUsers (params) {
         return await this.getUserList(params, {
-            [Op.gte]: 0
+            [Op.gte]: 1
         });
     }
     static async getApplyList (params) {
@@ -115,15 +117,25 @@ class CommunityDao {
             }
         });
     }
-    static async pass (id) {
-        await UserCommunity.update({
-            level: 1,
-            updateTime: global.util.getCurrentTimeStamps()
-        }, {
-            where: { id }
-        }).catch(err => {
-            throw new global.errs.HttpException('用户通过失败');
+    static async pass(id, userId) {
+        const userCommunity = await UserCommunity.findByPk(id);
+        if (!userCommunity) throw new global.errs.NotFound('找不到该申请记录');
+        const { level } = await this.getCurrentUserLevel(userId, userCommunity.communityId);
+        if (level < 10) throw new global.errs.Forbidden('权限不足');
+        if (userCommunity.level !== 0) throw new global.errs.HttpException('该用户并未申请或已申请通过');
+        userCommunity.level = 1;
+        userCommunity.save();
+    }
+    static async addManager(id, userId) {
+        const userCommunity = await UserCommunity.findOne({
+            where: {id}
         });
+        if (!userCommunity) throw new global.errs.NotFound('找不到该申请记录');
+        const { level } = await this.getCurrentUserLevel(userId, userCommunity.communityId);
+        if (level !== 100) throw new global.errs.Forbidden('权限不足');
+        if (userCommunity.level >= 10) throw new global.errs.HttpException('该用户已成为管理员');
+        userCommunity.level = 10;
+        userCommunity.save();
     }
     static async getCurrentUserLevel (userId, communityId) {
         const user = await User.findOne({
@@ -140,16 +152,12 @@ class CommunityDao {
             }
         }) || {};
     }
-    static async removeUser (params) {
-        const { userId, communityId } = params;
-        await UserCommunity.destroy({
-            where: {
-                userId,
-                communityId
-            }
-        }).catch(err => {
-            throw new global.errs.HttpException('删除用户失败');
-        });
+    static async removeUser (id, userId) {
+        const userCommunity = await UserCommunity.findByPk(id);
+        if (!userCommunity) throw new global.errs.NotFound('找不到该申请记录');
+        const { level } = await this.getCurrentUserLevel(userId, userCommunity.communityId);
+        if (level !== 100) throw new global.errs.Forbidden('权限不足');
+        userCommunity.destroy();
     }
     static async search(params) {
         const { text, size = 10, page = 1 } = params;
@@ -185,7 +193,12 @@ class CommunityDao {
                     model: Community,
                     attributes: ['id', 'communityName', 'avatarUrl'],
                     through: {
-                        attributes: []
+                        attributes: [],
+                        where: {
+                            level: {
+                                [Op.gte]: 1
+                            }
+                        }
                     },
                     required: true,
                     order: [
@@ -257,7 +270,7 @@ class CommunityDao {
     static async getUserList (params, level) {
         const { communityId, size = 10, page = 1 } = params;
         const list = await UserCommunity.findAndCountAll({
-            attributes: ['userId', 'level', 'nickName', 'gender', 'avatarUrl'],
+            attributes: ['id', 'userId', 'level', 'nickName', 'gender', 'avatarUrl'],
             where: {
                 communityId,
                 level

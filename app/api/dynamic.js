@@ -38,15 +38,15 @@ router.post('/communityRelease', auth, async (ctx) => { // 社团发布动态 �
     ctx.body = res.success('发布动态成功');
 });
 
-router.post('/edit', async (ctx) => { // 编辑动态 已测试
+router.post('/edit', auth, async (ctx) => { // 编辑动态 已测试
     const result = await releaseFunc(ctx);
-    await DynamicDao.edit({ ...ctx.request.body, img: result.url });
+    await DynamicDao.edit({ ...ctx.request.body, img: result.url, userId: ctx.state.userId });
     ctx.body = res.success('编辑动态成功');
 });
 
-router.get('/delete', async (ctx) => { // 删除动态 已测试
+router.get('/delete', auth, async (ctx) => { // 删除动态 已测试
     const { dynamicId } = ctx.request.query;
-    await DynamicDao.remove(dynamicId);
+    await DynamicDao.remove(dynamicId, ctx.state.userId);
     ctx.body = res.success('删除动态成功');
 });
 
@@ -61,19 +61,19 @@ router.get('/like', auth, async (ctx) => { // 点赞动态 已测试
     ctx.body = res.success(msg);
 });
 
-router.post('/addComment', auth, async (ctx) => { // 添加评论
+router.post('/addComment', auth, async (ctx) => { // 添加评论 已测试
     await DynamicDao.addComment({...ctx.request.body, userId: ctx.state.userId});
     ctx.body = res.success('评论成功');
 });
 
-router.post('/editComment', async (ctx) => { // 编辑评论
-    await DynamicDao.editComment(ctx.request.body);
+router.post('/editComment', auth, async (ctx) => { // 编辑评论 已测试
+    await DynamicDao.editComment({...ctx.request.body, userId: ctx.state.userId});
     ctx.body = res.success('编辑评论成功');
 });
 
-router.get('/removeComment', async (ctx) => { // 删除评论
+router.get('/removeComment', auth, async (ctx) => { // 删除评论 已测试
     const { id } = ctx.request.query;
-    await DynamicDao.removeComment(id);
+    await DynamicDao.removeComment(id, ctx.state.userId);
     ctx.body = res.success('删除评论成功');
 });
 
