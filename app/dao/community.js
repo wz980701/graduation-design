@@ -87,7 +87,17 @@ class CommunityDao {
             }) || {};
         }
 
+        const userNum = await UserCommunity.count({
+            where: {
+                communityId: id,
+                level: {
+                    [Op.gte]: 1
+                }
+            }
+        });
+
         community.announce = announce[0] || {};
+        community.userNum = userNum;
 
         return community;
     }
