@@ -253,7 +253,9 @@ class CommunityDao {
             attributes: ['communityId'],
             where: {
                 userId: user.id,
-                level
+                level: level === 1 ? {
+                    [Op.in]: [1, 10]
+                } : level
             },
             order: [
                 ['update_time', 'DESC']
