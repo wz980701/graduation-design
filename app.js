@@ -2,6 +2,7 @@ const Koa = require('koa');
 const InitManager = require('./core/init');
 const koaBody = require('koa-body');
 const cors = require('koa2-cors');
+const queryPretty = require('koa-query-pretty');
 const path = require('path');
 
 const catchError = require('./middlewares/exception');
@@ -10,6 +11,7 @@ const app = new Koa();
 
 app.use(cors());
 app.use(catchError);
+app.use(queryPretty());
 app.use(koaBody({
     multipart: true,
     formidable: {
