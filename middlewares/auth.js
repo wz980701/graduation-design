@@ -18,9 +18,9 @@ module.exports = async (ctx, next) => {
                 }
                 await next();
             }
+        } else {
+            throw new global.errs.AuthFailed('需要携带token值');
         }
-    } else {
-        throw new global.errs.AuthFailed('需要携带token值');
     }
 }
 
