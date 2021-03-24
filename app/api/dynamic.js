@@ -51,8 +51,7 @@ router.get('/delete', auth, async (ctx) => { // 删除动态 已测试
 });
 
 router.get('/detail', async (ctx) => { // 获取动态详情 已测试
-    const { dynamicId } = ctx.request.query;
-    const data = await DynamicDao.getDetail(dynamicId);
+    const data = await DynamicDao.getDetail(ctx.request.query);
     ctx.body = res.json(data, '获取详情成功');
 });
 

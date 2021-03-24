@@ -49,11 +49,34 @@ class DynamicDao {
         }
         dynamic.destroy();
     }
-    static async getDetail(id) {
-        const data = await Dynamic.scope('iv').findByPk(id).catch(err => {
-            throw new global.errs.NotFound('没有找到相关动态');
+    static async getDetail(params) {
+        const { dynamicId, size = 10, page = 1 } = params;
+        const data = await Dynamic.scope('iv').findByPk(dynamicId);
+        if (!data) throw new global.errs.NotFound('没有找到相关动态');
+        const comment = await Comment.scope('iv').findAndCountAll({
+            where: {
+                dynamicId
+            },
+            limit: size,
+            offset: (page - 1) * size,
+            order: [
+                ['update_time', 'DESC']
+            ],
+            raw: true
         });
-        return data;
+        for (let item of comment.rows) {
+            const userInfo = await this.getUserInfo(item.userId);
+            currentUserId && (item.isCurrentUser = currentUserId === item.userId);
+            item.userInfo = userInfo;
+        }
+        return {
+            ...data.dataValues,
+            comment: {
+                data: comment.rows,
+                count: comment.count,
+                totalPage: Math.ceil(comment.count / size)
+            }
+        };
     }
     static async getUserList(params) {
         const { size = 10, page = 1, userId } = params;
@@ -156,30 +179,9 @@ class DynamicDao {
                 where: { dynamicId: id }
             });
             const userInfo = await this.getUserInfo(userId);
-            const comment = await Comment.scope('iv').findAndCountAll({
-                where: {
-                    dynamicId: id
-                },
-                limit: size,
-                offset: (page - 1) * size,
-                order: [
-                    ['update_time', 'DESC']
-                ],
-                raw: true
-            });
-            for (let item of comment.rows) {
-                const userInfo = await this.getUserInfo(item.userId);
-                currentUserId && (item.isCurrentUser = currentUserId === item.userId);
-                item.userInfo = userInfo;
-            }
             item.likeNum = likeNum;
             currentUserId && (item.isCurrentUser = currentUserId === item.userId);
             item.userInfo = userInfo;
-            item.comment = {
-                data: comment.rows,
-                count: comment.count,
-                totalPage: Math.ceil(comment.count / size)
-            }
         }
         return {
             data: data.rows,
