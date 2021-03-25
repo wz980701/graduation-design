@@ -50,32 +50,20 @@ class DynamicDao {
         dynamic.destroy();
     }
     static async getDetail(params) {
-        const { dynamicId, size = 10, page = 1 } = params;
+        const { dynamicId, userId: currentUserId } = params;
         const data = await Dynamic.scope('iv').findByPk(dynamicId);
         if (!data) throw new global.errs.NotFound('没有找到相关动态');
-        const comment = await Comment.scope('iv').findAndCountAll({
-            where: {
-                dynamicId
-            },
-            limit: size,
-            offset: (page - 1) * size,
-            order: [
-                ['update_time', 'DESC']
-            ],
-            raw: true
+        const userInfo = await this.getUserInfo(currentUserId);
+        const likeNum = await Like.count({
+            where: { dynamicId }
         });
-        for (let item of comment.rows) {
-            const userInfo = await this.getUserInfo(item.userId);
-            currentUserId && (item.isCurrentUser = currentUserId === item.userId);
-            item.userInfo = userInfo;
-        }
+        let isCurrentUser;
+        currentUserId && (data.isCurrentUser = currentUserId === data.userId);
         return {
             ...data.dataValues,
-            comment: {
-                data: comment.rows,
-                count: comment.count,
-                totalPage: Math.ceil(comment.count / size)
-            }
+            userInfo,
+            likeNum,
+            isCurrentUser
         };
     }
     static async getUserList(params) {
@@ -153,6 +141,30 @@ class DynamicDao {
         if (!comment) throw new global.errs.NotFound('未找到该评论');
         if (comment.userId !== userId) throw new global.errs.Forbidden('没有权限编辑该动态');
         comment.destroy();
+    }
+    static async getCommentList (params) {
+        const { userId: currentUserId, dynamicId, size, page } = params;
+        const comment = await Comment.scope('iv').findAndCountAll({
+            where: {
+                dynamicId
+            },
+            limit: size,
+            offset: (page - 1) * size,
+            order: [
+                ['update_time', 'DESC']
+            ],
+            raw: true
+        });
+        for (let item of comment.rows) {
+            const userInfo = await this.getUserInfo(item.userId);
+            currentUserId && (item.isCurrentUser = currentUserId === item.userId);
+            item.userInfo = userInfo;
+        }
+        return {
+            data: comment.rows,
+            count: comment.count,
+            totalPage: Math.ceil(comment.count / size)
+        }
     }
     static async getUserInfo(userId) {
         const data = await UserInfo.findOne({

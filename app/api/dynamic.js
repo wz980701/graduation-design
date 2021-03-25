@@ -50,8 +50,8 @@ router.get('/delete', auth, async (ctx) => { // 删除动态 已测试
     ctx.body = res.success('删除动态成功');
 });
 
-router.get('/detail', async (ctx) => { // 获取动态详情 已测试
-    const data = await DynamicDao.getDetail(ctx.request.query);
+router.get('/detail', auth, async (ctx) => { // 获取动态详情 已测试
+    const data = await DynamicDao.getDetail({...ctx.request.query, userId: ctx.state.userId});
     ctx.body = res.json(data, '获取详情成功');
 });
 
@@ -89,6 +89,11 @@ router.get('/ownerList', auth, async (ctx) => { // 获取用户自身动态列�
 router.get('/communityList', auth, async (ctx) => { // 获取社团动态列表 已测试
     const data = await DynamicDao.getCommunityList({...ctx.request.query, userId: ctx.state.userId});
     ctx.body = res.json(data, '获取动态列表成功');
+});
+
+router.get('/commentList', auth, async (ctx) => {
+    const data = await DynamicDao.getCommentList({...ctx.request.query, userId: ctx.state.userId});
+    ctx.body = res.json(data, '获取评论列表成功');
 });
 
 const releaseFunc = async (ctx) => {
