@@ -181,6 +181,9 @@ class DynamicDao {
             attributes: ['id','content','img','userId','createTime','updateTime'],
             where: condition,
             limit: size,
+            order: [
+                ['update_time', 'DESC']
+            ],
             offset: (page - 1) * size,
             raw: true
         });
@@ -190,9 +193,14 @@ class DynamicDao {
             const likeNum = await Like.count({
                 where: { dynamicId: id }
             });
+            const isLike = await Like.findOne({
+                where: { userId: currentUserId, dynamicId: id }
+            }).then((res) => {
+                return res ? true : false;
+            });
             const userInfo = await this.getUserInfo(userId);
+            item.isLike = isLike;
             item.likeNum = likeNum;
-            currentUserId && (item.isCurrentUser = currentUserId === item.userId);
             item.userInfo = userInfo;
         }
         return {
