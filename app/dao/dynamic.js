@@ -53,16 +53,22 @@ class DynamicDao {
         const { dynamicId, userId: currentUserId } = params;
         const data = await Dynamic.scope('iv').findByPk(dynamicId);
         if (!data) throw new global.errs.NotFound('没有找到相关动态');
-        const userInfo = await this.getUserInfo(currentUserId);
+        const userInfo = await this.getUserInfo(data.userId);
         const likeNum = await Like.count({
-            where: { dynamicId }
+            where: { dynamicId, like: true }
+        });
+        const isLike = await Like.findOne({
+            where: { userId: currentUserId, dynamicId, like: true }
+        }).then((res) => {
+            return res ? true : false;
         });
         let isCurrentUser;
-        currentUserId && (data.isCurrentUser = currentUserId === data.userId);
+        currentUserId && (isCurrentUser = currentUserId === data.userId);
         return {
             ...data.dataValues,
             userInfo,
             likeNum,
+            isLike,
             isCurrentUser
         };
     }
@@ -191,10 +197,10 @@ class DynamicDao {
         for (let item of data.rows) {
             const { id, userId } = item;
             const likeNum = await Like.count({
-                where: { dynamicId: id }
+                where: { dynamicId: id, like: true }
             });
             const isLike = await Like.findOne({
-                where: { userId: currentUserId, dynamicId: id }
+                where: { userId: currentUserId, dynamicId: id, like: true }
             }).then((res) => {
                 return res ? true : false;
             });
