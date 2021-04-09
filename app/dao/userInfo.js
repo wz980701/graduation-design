@@ -11,7 +11,12 @@ class UserInfoDao {
             }
         });
 
-        if (hasUserInfo) throw new global.errs.Existing('用户信息已存在');
+        if (hasUserInfo) {
+            await this.update({userId, ...userInfo});
+            return {
+                userInfo
+            }
+        }
 
         const user = await User.findOne({
             where: {

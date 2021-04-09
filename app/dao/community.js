@@ -323,6 +323,23 @@ class CommunityDao {
             throw new global.errs.HttpException('设置背景头像失败');
         });
     }
+    static async cancelApply (params) {
+        const { id, userId } = params;
+        const user = await User.findOne({
+            attributes: ['id'],
+            where: {
+                uId: userId
+            }
+        });
+        await UserCommunity.destroy({
+            where: {
+                communityId: id,
+                userId: user.id
+            }
+        }).catch(err => {
+            throw new global.errs.HttpException('取消申请失败');
+        });
+    }
 }
 
 module.exports = {

@@ -53,6 +53,11 @@ router.get('/passUser', auth, async (ctx) => { // 用户申请通过 已测试
     ctx.body = res.success('审批成功');
 });
 
+router.get('/cancelApply', auth, async (ctx) => { // 取消申请
+    await CommunityDao.cancelApply({...ctx.request.query, userId: ctx.state.userId});
+    ctx.body = res.success('取消申请成功');
+});
+
 router.get('/addManager', auth, async (ctx) => { // 添加管理员 已测试
     const { id } = ctx.request.query;
     await CommunityDao.addManager(id, ctx.state.userId);
