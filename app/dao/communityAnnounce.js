@@ -20,10 +20,10 @@ class CommunityAnnounceDao {
         }).catch(err => {
             throw new global.errs.HttpException('创建公告失败');
         });
-        community.setCommunityAnnounces(announce);
+        community.addCommunityAnnounces(announce);
     }
     static async getAnnounceList (params) {
-        const { communityId, size = 10, page = 1 } = params;
+        const { communityId, userId, size = 10, page = 1 } = params;
         const list = await CommunityAnnounce.findAndCountAll({
             attributes: ['id', 'userId', 'content', 'updateTime', 'createTime'],
             where: {
@@ -43,13 +43,14 @@ class CommunityAnnounceDao {
         
         for (let item of rows) {
             const userInfo = await UserInfo.findOne({
-                attributes: ['nickName', 'gender'],
+                attributes: ['nickName', 'avatarUrl'],
                 where: {
                     uId: item.userId
                 },
                 raw: true 
             });
             item.userInfo = userInfo;
+            item.isCurrentUser = item.userId === userId;
         }
 
         return {

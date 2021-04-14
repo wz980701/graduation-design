@@ -87,10 +87,9 @@ class DynamicDao {
     }
     static async getCommunityList(params) {
         const { size = 10, page = 1, communityId, userId } = params;
-        return await this.getDynamicList({
-            isCommunity: true,
-            communityId
-        }, size, page, userId);
+        const options = { isCommunity: true };
+        communityId && (options.communityId = communityId);
+        return await this.getDynamicList(options, size, page, userId);
     }
     static async remove(id) {
         await Dynamic.destroy({
@@ -184,7 +183,7 @@ class DynamicDao {
     }
     static async getDynamicList(condition, size, page, currentUserId) {
         const data = await Dynamic.findAndCountAll({
-            attributes: ['id','content','img','userId','createTime','updateTime'],
+            attributes: ['id','content','img','userId','createTime','updateTime', 'communityId'],
             where: condition,
             limit: size,
             order: [
@@ -204,10 +203,15 @@ class DynamicDao {
             }).then((res) => {
                 return res ? true : false;
             });
-            const userInfo = await this.getUserInfo(userId);
+            if (condition.isCommunity) {
+                const communityInfo = await CommunityDao.getInfo(item.communityId);
+                item.communityInfo = communityInfo;
+            } else {
+                const userInfo = await this.getUserInfo(userId);
+                item.userInfo = userInfo;
+            }
             item.isLike = isLike;
             item.likeNum = likeNum;
-            item.userInfo = userInfo;
         }
         return {
             data: data.rows,

@@ -69,8 +69,8 @@ router.post('/addAnnounce', auth, async (ctx) => { // 发布公告 已测试
     ctx.body = res.success('发布公告成功');
 });
 
-router.get('/getAnnounceList', async (ctx) => { // 获取公告列表 已测试
-    const data = await CommunityAnnounceDao.getAnnounceList(ctx.request.query);
+router.get('/getAnnounceList', auth, async (ctx) => { // 获取公告列表 已测试
+    const data = await CommunityAnnounceDao.getAnnounceList({...ctx.request.query, userId: ctx.state.userId});
     ctx.body = res.json(data, '获取公告列表成功');
 });
 
