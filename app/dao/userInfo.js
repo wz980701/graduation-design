@@ -48,6 +48,15 @@ class UserInfoDao {
             throw new global.errs.HttpException('更新用户信息失败');
         });
     }
+    static async get(userId) {
+        const userInfo = await UserInfo.findOne({
+            where: {
+                uId: userId
+            }
+        });
+        if (!userInfo) throw new global.errs.NotFound('找不到该用户信息');
+        return userInfo;
+    }
 }
 
 module.exports = {
