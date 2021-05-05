@@ -92,8 +92,8 @@ router.get('/getCurrentUserLevel', auth, async (ctx) => { // 获取当前用户�
 });
 
 router.get('/removeUser', auth, async (ctx) => { // 删除用户或者用户退出社团 已测试
-    const { id } = ctx.request.query;
-    await CommunityDao.removeUser(id, ctx.state.userId);
+    const { communityId } = ctx.request.query;
+    await CommunityDao.removeUser(communityId, ctx.state.userId);
     ctx.body = res.success('删除成功');
 });
 
@@ -115,6 +115,11 @@ router.post('/search', async (ctx) => { // 搜索社团 已测试
 router.get('/getSelectCommunityList', auth, async (ctx) => { // 获取用户的社团列表 已测试
     const data = await CommunityDao.getSelectCommunityList({...ctx.request.query, userId: ctx.state.userId});
     ctx.body = res.json(data, '获取社团列表成功');
+});
+
+router.get('/getSearchUserList', async (ctx) => { // 获取搜索用户列表
+    const data = await CommunityDao.getSearchUserList({ ...ctx.request.query });
+    ctx.body = res.json(data, '获取搜索用户列表成功');
 });
 
 module.exports = router;

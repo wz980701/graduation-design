@@ -30,6 +30,10 @@ const Dynamic = sequelize.define('dynamic', {
         type: Sequelize.BOOLEAN,
         defaultValue: false
     },
+    browseTimes: {
+        type: Sequelize.INTEGER,
+        defaultValue: 0
+    },
     createTime: {
         type: Sequelize.DATE,
         defaultValue: Sequelize.NOW,

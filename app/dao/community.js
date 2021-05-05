@@ -162,11 +162,18 @@ class CommunityDao {
             }
         }) || {};
     }
-    static async removeUser (id, userId) {
-        const userCommunity = await UserCommunity.findByPk(id);
-        if (!userCommunity) throw new global.errs.NotFound('找不到该申请记录');
-        const { level } = await this.getCurrentUserLevel(userId, userCommunity.communityId);
-        if (level !== 100) throw new global.errs.Forbidden('权限不足');
+    static async removeUser(communityId, userId) {
+        const user = await User.findOne({
+            where: { uId: userId } 
+        });
+        if (!user) throw new global.errs.NotFound('找不到该用户');
+        const userCommunity = await UserCommunity.findOne({
+            where: {
+                communityId,
+                userId: user.id
+            } 
+        });
+        if (!userCommunity) throw new global.errs.NotFound('该社团找不到该用户');
         userCommunity.destroy();
     }
     static async search(params) {
@@ -339,6 +346,28 @@ class CommunityDao {
         }).catch(err => {
             throw new global.errs.HttpException('取消申请失败');
         });
+    }
+    static async getSearchUserList(params) {
+        const { text, communityId, size = 10, page = 1 } = params;
+        const list = await UserCommunity.findAndCountAll({
+            attributes: ['id', 'userId', 'level', 'nickName', 'gender', 'avatarUrl'],
+            where: {
+                communityId,
+                nickName: {
+                    [Op.like]: `%${text}%`
+                }
+            },
+            order: [
+                ['update_time', 'DESC']
+            ],
+            limit: size,
+            offset: (page - 1) * size
+        });
+        return {
+            data: list.rows,
+            count: list.count,
+            totalPage: Math.ceil(list.count / size)
+        }
     }
 }
 

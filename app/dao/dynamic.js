@@ -181,9 +181,33 @@ class DynamicDao {
         if (!data) throw new global.errs.NotFound('获取不到用户信息');
         return data;
     }
+    static async updateBrowseTimes(params) {
+        const { id } = params;
+        const dynamic = await Dynamic.findByPk(id);
+        dynamic.increment('browseTimes');
+    }
+    static async getHotList() {
+        const data = await Dynamic.findAll({
+            attributes: ['id', 'content', 'img', 'userId', 'updateTime'],
+            where: {
+                isCommunity: false
+            },
+            limit: 5,
+            order: [
+                ['browse_times', 'DESC']
+            ],
+            raw: true
+        });
+        if (!data) return {};
+        for (let item of data) {
+            const userInfo = await this.getUserInfo(item.userId);
+            item.userInfo = userInfo;
+        }
+        return data;
+    }
     static async getDynamicList(condition, size, page, currentUserId) {
         const data = await Dynamic.findAndCountAll({
-            attributes: ['id','content','img','userId','createTime','updateTime', 'communityId'],
+            attributes: ['id','content','img','userId','createTime','updateTime', 'communityId', 'browseTimes'],
             where: condition,
             limit: size,
             order: [

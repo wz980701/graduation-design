@@ -91,9 +91,19 @@ router.get('/communityList', auth, async (ctx) => { // 获取社团动态列表 
     ctx.body = res.json(data, '获取动态列表成功');
 });
 
-router.get('/commentList', auth, async (ctx) => {
+router.get('/commentList', auth, async (ctx) => { // 获取评论列表 
     const data = await DynamicDao.getCommentList({...ctx.request.query, userId: ctx.state.userId});
     ctx.body = res.json(data, '获取评论列表成功');
+});
+
+router.get('/updateBrowseTimes', async (ctx) => { // 浏览次数增长
+    await DynamicDao.updateBrowseTimes(ctx.request.query);
+    ctx.body = res.success('浏览次数+1');
+});
+
+router.get('/getHotList', async (ctx) => { // 获取热度前5列表
+    const data = await DynamicDao.getHotList();
+    ctx.body = res.json(data, '获取热度列表成功');
 });
 
 const releaseFunc = async (ctx) => {
